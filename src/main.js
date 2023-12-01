@@ -1,9 +1,14 @@
 import { app, BrowserWindow } from "electron";
+import Store from "electron-store";
+import fs from "fs";
+import os from "os";
 import path from "path";
 import { fileURLToPath } from "url";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+
+const store = new Store();
 
 const createWindow = () => {
   // Create the browser window.
@@ -51,8 +56,20 @@ app.on("activate", () => {
 });
 
 import { LlamaModel } from "node-llama-cpp";
-const model = new LlamaModel({
-  // Make this a configurable thing.
-  modelPath:
-    "/Users/fozziethebeat/.cache/lm-studio/models/TheBloke/Hermes-Trismegistus-Mistral-7B-GGUF/hermes-trismegistus-mistral-7b.Q5_K_M.gguf",
-});
+const modelDir = store.get("model_dir");
+if (!modelDir) {
+  const defaultModelDir = path.join(
+    os.homedir(),
+    ".cache/local-llama-electron"
+  );
+  fs.mkdirSync(defaultModelDir, { recursive: true });
+  store.set("model_dir", defaultModelDir);
+} else {
+  const model = new LlamaModel({
+    // Make this a configurable thing.
+    modelPath: path.join(
+      modelDir,
+      "hermes-trismegistus-mistral-7b.Q5_K_M.gguf"
+    ),
+  });
+}
