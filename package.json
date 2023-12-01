@@ -9,13 +9,12 @@
     "start": "electron-forge start",
     "package": "electron-forge package",
     "make": "electron-forge make",
-    "publish": "electron-forge publish",
-    "lint": "echo \"No linting configured\""
+    "publish": "electron-forge publish"
   },
   "keywords": [],
   "author": {
     "name": "Keith Stevens",
-    "email": "keith@surfacedata.org",
+    "email": "keith@surfacedata.org"
   },
   "license": "MIT",
   "devDependencies": {
