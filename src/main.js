@@ -1,6 +1,7 @@
-import { app, BrowserWindow } from "electron";
+import { app, BrowserWindow, ipcMain } from "electron";
 import Store from "electron-store";
 import fs from "fs";
+import { LlamaModel } from "node-llama-cpp";
 import os from "os";
 import path from "path";
 import { fileURLToPath } from "url";
@@ -8,7 +9,15 @@ import { fileURLToPath } from "url";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
+/**
+ * A global cache storage for persistent user data.
+ */
 const store = new Store();
+
+/**
+ * A local Llama Model that we'll be using consistently.
+ */
+let model = undefined;
 
 const createWindow = () => {
   // Create the browser window.
@@ -38,6 +47,11 @@ const createWindow = () => {
 // Some APIs can only be used after this event occurs.
 app.on("ready", createWindow);
 
+/**
+ * Loads a LLama Model
+ */
+ipcMain.handle("model-load", loadModel);
+
 // Quit when all windows are closed, except on macOS. There, it's common
 // for applications and their menu bar to stay active until the user quits
 // explicitly with Cmd + Q.
@@ -55,7 +69,9 @@ app.on("activate", () => {
   }
 });
 
-import { LlamaModel } from "node-llama-cpp";
+/**
+ * Initialize the model configuration on the first run.
+ */
 const modelDir = store.get("model_dir");
 if (!modelDir) {
   const defaultModelDir = path.join(
@@ -64,12 +80,22 @@ if (!modelDir) {
   );
   fs.mkdirSync(defaultModelDir, { recursive: true });
   store.set("model_dir", defaultModelDir);
-} else {
-  const model = new LlamaModel({
+}
+
+/**
+ * Checks the model cache dir and loads a model if available.
+ */
+async function loadModel() {
+  const modelDir = store.get("model_dir");
+  if (!modelDir) {
+    return false;
+  }
+  model = new LlamaModel({
     // Make this a configurable thing.
     modelPath: path.join(
       modelDir,
       "hermes-trismegistus-mistral-7b.Q5_K_M.gguf"
     ),
   });
+  return true;
 }
