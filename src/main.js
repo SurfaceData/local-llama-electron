@@ -1,7 +1,7 @@
 import { app, BrowserWindow, ipcMain } from "electron";
 import Store from "electron-store";
 import fs from "fs";
-import { LlamaModel } from "node-llama-cpp";
+import { LlamaChatSession, LlamaContext, LlamaModel } from "node-llama-cpp";
 import os from "os";
 import path from "path";
 import { fileURLToPath } from "url";
@@ -18,6 +18,12 @@ const store = new Store();
  * A local Llama Model that we'll be using consistently.
  */
 let model = undefined;
+/**
+ * Structures required by LlamaModel for handling chat sessions.  These get
+ * created when the model is loaded.
+ */
+let modelContext = undefined;
+let modelSession = undefined;
 
 const createWindow = () => {
   // Create the browser window.
@@ -51,6 +57,10 @@ app.on("ready", createWindow);
  * Loads a LLama Model
  */
 ipcMain.handle("model-load", loadModel);
+/**
+ * Two way communication with the model.
+ */
+ipcMain.handle("model-chat", chat);
 
 // Quit when all windows are closed, except on macOS. There, it's common
 // for applications and their menu bar to stay active until the user quits
@@ -85,7 +95,7 @@ if (!modelDir) {
 /**
  * Checks the model cache dir and loads a model if available.
  */
-async function loadModel() {
+function loadModel() {
   const modelDir = store.get("model_dir");
   if (!modelDir) {
     return false;
@@ -97,5 +107,19 @@ async function loadModel() {
       "hermes-trismegistus-mistral-7b.Q5_K_M.gguf"
     ),
   });
+  modelContext = new LlamaContext({ model });
+  modelSession = new LlamaChatSession({ context: modelContext });
   return true;
+}
+
+/**
+ * Prompts the model to respond to the user message in relation to the current
+ * session context.
+ */
+async function chat(event, userMessage) {
+  if (!modelSession) {
+    throw new Error("Model not loaded");
+  }
+  const assistantMessage = await modelSession.prompt(userMessage);
+  return assistantMessage;
 }
