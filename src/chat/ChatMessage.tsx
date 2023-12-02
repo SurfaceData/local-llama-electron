@@ -1,6 +1,8 @@
 import * as React from "react";
 
 import { Message, MessageRole } from "src/types";
+import ChatMessageAssistant from "src/chat/ChatMessageAssistant";
+import ChatMessageUser from "src/chat/ChatMessageUser";
 
 interface ChatMessageProps {
   message: Message;

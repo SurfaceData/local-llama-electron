@@ -1,13 +1,23 @@
-import { app, BrowserWindow, ipcMain } from "electron";
+import { BrowserWindow, app, dialog, ipcMain } from "electron";
 import Store from "electron-store";
 import fs from "fs";
 import { LlamaChatSession, LlamaContext, LlamaModel } from "node-llama-cpp";
+import OpenAI from "openai";
 import os from "os";
 import path from "path";
 import { fileURLToPath } from "url";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+
+/**
+ * Fake for calling llama-cpp-python server with features not yet supported by
+ * node-llama-cpp.
+ */
+const openai = new OpenAI({
+  apiKey: "sk-xxx",
+  baseURL: "http://localhost:8000/v1",
+});
 
 /**
  * A global cache storage for persistent user data.
@@ -61,6 +71,11 @@ ipcMain.handle("model-load", loadModel);
  * Two way communication with the model.
  */
 ipcMain.handle("model-chat", chat);
+
+/**
+ * Takes in images and analyzes them.
+ */
+ipcMain.handle("image-analyze", analyzeImage);
 
 // Quit when all windows are closed, except on macOS. There, it's common
 // for applications and their menu bar to stay active until the user quits
@@ -122,4 +137,33 @@ async function chat(event, userMessage) {
   }
   const assistantMessage = await modelSession.prompt(userMessage);
   return assistantMessage;
+}
+
+/**
+ * Triggers an image to text multi-modal model.
+ */
+async function analyzeImage() {
+  // Get yo images.
+  const { filePaths } = await dialog.showOpenDialog({
+    filters: [{ name: "Images", extensions: ["jpg", "jpeg", "png", "webp"] }],
+    properties: ["openFile"],
+  });
+  // Later, this should actually call a node-llama-cpp model.  For now we call
+  // llama-cpp-python through the OpenAI api.
+  const result = await openai.chat.completions.create({
+    model: "llava-1.5",
+    messages: [
+      {
+        role: "user",
+        content: [
+          { type: "text", text: "What’s in this image?" },
+          {
+            type: "image_url",
+            image_url: `file://${filePaths[0]}`,
+          },
+        ],
+      },
+    ],
+  });
+  return result.choices[0].message.content;
 }

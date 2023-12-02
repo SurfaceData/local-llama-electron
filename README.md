@@ -24,3 +24,21 @@ is also included in the dependencies.
 
 In a follow up blog post, I'll explain all these steps in depth since they were
 honestly a huge pain.
+
+## Hacking together multi-modal support
+
+To run [llama-cpp-python](https://llama-cpp-python.readthedocs.io/en/latest/)
+with a vision model, we can do the following:
+
+```sh
+python -m llama_cpp.server \
+  --model ~/.cache/lm-studio/models/mys/ggml_llava-v1.5-7b/ggml-model-q5_k.gguf \
+  --model_alias llava-1.5 \
+  --clip_model_path ~/.cache/lm-studio/models/mys/ggml_llava-v1.5-7b/mmproj-model-f16.gguf \
+  --chat_format llava-1-5 \
+  --n_gpu_layers 1
+```
+
+NOTE: If you're running on an M2, the latest version of `llama-cpp-python`
+might be a pain to install.  See [this
+issue](https://github.com/abetlen/llama-cpp-python/issues/847) for some fixes.

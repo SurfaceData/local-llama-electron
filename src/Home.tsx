@@ -1,40 +1,40 @@
 import * as React from "react";
 import { useState } from "react";
 
-import ChatThread from "src/chat/ChatThread";
+import ChatTab from "src/chat/ChatTab";
+import ImageTab from "src/image/ImageTab";
 
 /**
  * A basic home page that allows the user to load a message and then chat with
  * a model.
  */
 const HomePage = () => {
-  const [loading, setLoading] = useState<boolean>(false);
-  const [success, setSuccess] = useState<boolean>(false);
-
-  /**
-   * Loads the model.  If successfull the chat UI will be revealed.
-   */
-  const onClick = async () => {
-    setLoading(true);
-    const loadSuccess = await window.electronAPI.loadModel();
-    setLoading(false);
-    setSuccess(loadSuccess);
-  };
-
   return (
     <div>
-      <div className="text-sm font-bold underline">Hello from React!</div>
-      {!success && (
-        <button
-          onClick={onClick}
-          disabled={loading}
-          className="btn btn-primary"
-        >
-          {loading && <span className="loading loading-spinner" />}
-          Load Model
-        </button>
-      )}
-      {success && <ChatThread />}
+      <div role="tablist" className="tabs tabs-bordered">
+        <input
+          type="radio"
+          name="my_tabs_1"
+          role="tab"
+          className="tab"
+          aria-label="Chat"
+          defaultChecked
+        />
+        <div role="tabpanel" className="tab-content p-10">
+          <ChatTab />
+        </div>
+
+        <input
+          type="radio"
+          name="my_tabs_1"
+          role="tab"
+          className="tab"
+          aria-label="Image"
+        />
+        <div role="tabpanel" className="tab-content p-10">
+          <ImageTab />
+        </div>
+      </div>
     </div>
   );
 };
