@@ -42,3 +42,7 @@ python -m llama_cpp.server \
 NOTE: If you're running on an M2, the latest version of `llama-cpp-python`
 might be a pain to install.  See [this
 issue](https://github.com/abetlen/llama-cpp-python/issues/847) for some fixes.
+
+To run a minimal OpenAI compatible image generation server, go to
+[local-sdxl-turbo](https://github.com/SurfaceData/local-sdxl-turbo), install
+and run it.  This is setup to use the default port.

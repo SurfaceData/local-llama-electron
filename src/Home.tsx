@@ -2,6 +2,7 @@ import * as React from "react";
 import { useState } from "react";
 
 import ChatTab from "src/chat/ChatTab";
+import GenerateImageTab from "src/image/GenerateImageTab";
 import ImageTab from "src/image/ImageTab";
 
 /**
@@ -33,6 +34,17 @@ const HomePage = () => {
         />
         <div role="tabpanel" className="tab-content p-10">
           <ImageTab />
+        </div>
+
+        <input
+          type="radio"
+          name="my_tabs_1"
+          role="tab"
+          className="tab"
+          aria-label="Generate Image"
+        />
+        <div role="tabpanel" className="tab-content p-10">
+          <GenerateImageTab />
         </div>
       </div>
     </div>

@@ -5,4 +5,6 @@ contextBridge.exposeInMainWorld("electronAPI", {
   loadModel: () => ipcRenderer.invoke("model-load"),
   chat: (userMessage) => ipcRenderer.invoke("model-chat", userMessage),
   analyzeImage: () => ipcRenderer.invoke("image-analyze"),
+  generateImage: (prompt) => ipcRenderer.invoke("image-generate", prompt),
+  saveImage: (image) => ipcRenderer.invoke("image-save", image),
 });

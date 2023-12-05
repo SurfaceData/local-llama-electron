@@ -14,9 +14,17 @@ const __dirname = path.dirname(__filename);
  * Fake for calling llama-cpp-python server with features not yet supported by
  * node-llama-cpp.
  */
-const openai = new OpenAI({
+const mlmOpenai = new OpenAI({
   apiKey: "sk-xxx",
   baseURL: "http://localhost:8000/v1",
+});
+
+/**
+ * Fake for calling local-sdxl-turbo server.
+ */
+const imageOpenai = new OpenAI({
+  apiKey: "sk-xxx",
+  baseURL: "http://localhost:9000/v1",
 });
 
 /**
@@ -73,9 +81,19 @@ ipcMain.handle("model-load", loadModel);
 ipcMain.handle("model-chat", chat);
 
 /**
- * Takes in images and analyzes them.
+ * Given an image, produces a text analysis.
  */
 ipcMain.handle("image-analyze", analyzeImage);
+
+/**
+ * Generates an image given a prompt.
+ */
+ipcMain.handle("image-generate", generateImage);
+
+/*
+ * Saves a base64 image as a PNG file.
+ */
+ipcMain.handle("image-save", saveImage);
 
 // Quit when all windows are closed, except on macOS. There, it's common
 // for applications and their menu bar to stay active until the user quits
@@ -150,7 +168,7 @@ async function analyzeImage() {
   });
   // Later, this should actually call a node-llama-cpp model.  For now we call
   // llama-cpp-python through the OpenAI api.
-  const result = await openai.chat.completions.create({
+  const result = await mlmOpenai.chat.completions.create({
     model: "llava-1.5",
     messages: [
       {
@@ -166,4 +184,30 @@ async function analyzeImage() {
     ],
   });
   return result.choices[0].message.content;
+}
+
+/**
+ * Given a prompt, generates an image by calling a remote OpenAI compatible
+ * server and returning the base64 representation.
+ */
+async function generateImage(event, prompt) {
+  // Later, this should actually call a node-llama-cpp model.  For now we call
+  // llama-cpp-python through the OpenAI api.
+  const result = await imageOpenai.images.generate({
+    prompt,
+    model: "sdxl-turbo",
+  });
+  return result.data[0].b64_json;
+}
+
+/**
+ * Given a base64 image representation, opens a save dialog and saves the image
+ * in the desired file as a PNG.
+ */
+async function saveImage(event, image) {
+  const { filePath } = await dialog.showSaveDialog();
+  if (!filePath) {
+    throw new Error("Must select a file for saving");
+  }
+  fs.writeFileSync(`${filePath}.png`, image, "base64");
 }
