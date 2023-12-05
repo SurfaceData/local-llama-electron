@@ -1,5 +1,5 @@
 import * as React from "react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 
 /**
@@ -11,19 +11,32 @@ const ImageTab = () => {
 
   // Manages loading state.
   const [loading, setLoading] = useState(false);
+  const [result, setResult] = useState<string>("");
 
   /**
    * Sends a message to the main process and gets the response.
    */
-  const sendMessage = async () => {
+  const sendMessage = () => {
     setLoading(true);
 
+    setResult("");
     // Waiting!
-    const analysis = await window.electronAPI.analyzeImage();
-    console.log(analysis);
-
-    setLoading(false);
+    window.electronAPI.analyzeImage();
   };
+
+  useEffect(() => {
+    window.electronAPI.onAnalyzeImageReply((chunk) => {
+      if (!chunk) {
+        return;
+      }
+      const { content, done } = chunk;
+      setResult((oldResult) => (oldResult += content));
+      if (done) {
+        setLoading(false);
+      }
+    });
+  }, [setResult, setLoading]);
+
   return (
     <div>
       <form onSubmit={handleSubmit(sendMessage)}>
@@ -32,6 +45,7 @@ const ImageTab = () => {
           Analyze an Image
         </button>
       </form>
+      <div>{result}</div>
     </div>
   );
 };

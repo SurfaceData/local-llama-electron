@@ -82,8 +82,10 @@ ipcMain.handle("model-chat", chat);
 
 /**
  * Given an image, produces a text analysis.
+ * Note: Electron docs [1] explains why this is `on` instead of `invoke`.
+ * [1]: https://www.electronjs.org/docs/latest/tutorial/ipc#using-ipcrenderersend
  */
-ipcMain.handle("image-analyze", analyzeImage);
+ipcMain.on("image-analyze", analyzeImage);
 
 /**
  * Generates an image given a prompt.
@@ -154,13 +156,20 @@ async function chat(event, userMessage) {
     throw new Error("Model not loaded");
   }
   const assistantMessage = await modelSession.prompt(userMessage);
+  // Note: We could do streaming here but node-llama-cpp doesn't expose a
+  // streaming interface.
   return assistantMessage;
 }
 
 /**
  * Triggers an image to text multi-modal model.
+ *
+ * Note: this implements streaming via Electron's legacy two way communication
+ * method:
+ *    https://www.electronjs.org/docs/latest/tutorial/ipc#using-ipcrenderersend
+ *  This seems like the best way to stream results?
  */
-async function analyzeImage() {
+async function analyzeImage(event) {
   // Get yo images.
   const { filePaths } = await dialog.showOpenDialog({
     filters: [{ name: "Images", extensions: ["jpg", "jpeg", "png", "webp"] }],
@@ -182,8 +191,24 @@ async function analyzeImage() {
         ],
       },
     ],
+    stream: true,
   });
-  return result.choices[0].message.content;
+  // Get each returned chunk and return it via the reply callback.  Ideally
+  // there should be a request ID so the client can validate each chunk.
+  for await (const chunk of result) {
+    const content = chunk.choices[0].delta.content;
+    if (content) {
+      event.reply("image-analyze-reply", {
+        content,
+        done: false,
+      });
+    }
+  }
+  // Let the callback know that we're done.
+  event.reply("image-analyze-reply", {
+    content: "",
+    done: true,
+  });
 }
 
 /**
