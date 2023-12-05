@@ -1,17 +1,13 @@
 import * as React from "react";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
-import { v4 as uuid } from "uuid";
-
-import { Message, MessageRole } from "src/types";
-import ChatMessage from "src/chat/ChatMessage";
 
 /**
  * A full chat thread that appends user and assistant messages to the end.
  */
 const ImageTab = () => {
   // Leverage react-hook-form to make the thread easier.
-  const { register, handleSubmit } = useForm();
+  const { handleSubmit } = useForm();
 
   // Manages loading state.
   const [loading, setLoading] = useState(false);

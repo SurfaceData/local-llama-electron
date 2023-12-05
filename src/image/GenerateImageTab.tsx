@@ -1,10 +1,6 @@
 import * as React from "react";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
-import { v4 as uuid } from "uuid";
-
-import { Message, MessageRole } from "src/types";
-import ChatMessage from "src/chat/ChatMessage";
 
 /**
  * A full chat thread that appends user and assistant messages to the end.
@@ -30,11 +26,14 @@ const GenerateImageTab = () => {
     setLoading(false);
   };
 
+  /**
+   * Sends the current image back to the server to save it.
+   */
   const saveImage = async () => {
     setLoading(true);
 
     // Waiting!
-    const imageB64 = await window.electronAPI.saveImage(image);
+    await window.electronAPI.saveImage(image);
 
     setLoading(false);
   };

@@ -1,5 +1,4 @@
 import * as React from "react";
-import { useState } from "react";
 
 import ChatTab from "src/chat/ChatTab";
 import GenerateImageTab from "src/image/GenerateImageTab";
