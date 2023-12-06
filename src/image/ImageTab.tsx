@@ -11,6 +11,7 @@ const ImageTab = () => {
 
   // Manages loading state.
   const [loading, setLoading] = useState(false);
+  const [image, setImage] = useState<string | undefined>(undefined);
   const [result, setResult] = useState<string>("");
 
   /**
@@ -25,20 +26,35 @@ const ImageTab = () => {
   };
 
   useEffect(() => {
+    /**
+     * Register a unique handler that will capture the response chunks and display them.
+     */
     window.electronAPI.onAnalyzeImageReply((chunk) => {
       if (!chunk) {
         return;
       }
       const { content, done } = chunk;
+      // Use React's function method to do an update with respect to the old
+      // state value.  This is best practice.
       setResult((oldResult) => (oldResult += content));
       if (done) {
         setLoading(false);
       }
     });
-  }, [setResult, setLoading]);
+    /**
+     * Register a unique handler to handle the user's selected image path and render it.
+     */
+    window.electronAPI.onAnalyzeImageSelection((imagePath) => {
+      if (!imagePath) {
+        return;
+      }
+      setImage(imagePath);
+    });
+  }, [setImage, setResult, setLoading]);
 
   return (
     <div>
+      {image && <img src={image} />}
       <form onSubmit={handleSubmit(sendMessage)}>
         <button type="submit" disabled={loading} className="btn btn-primary">
           {loading && <span className="loading loading-spinner" />}

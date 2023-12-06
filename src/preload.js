@@ -11,6 +11,8 @@ contextBridge.exposeInMainWorld("electronAPI", {
    */
   onAnalyzeImageReply: (callback) =>
     ipcRenderer.on("image-analyze-reply", (_, arg) => callback(arg)),
+  onAnalyzeImageSelection: (callback) =>
+    ipcRenderer.on("image-analyze-selection", (_, arg) => callback(arg)),
   analyzeImage: () => ipcRenderer.send("image-analyze"),
   generateImage: (prompt) => ipcRenderer.invoke("image-generate", prompt),
   saveImage: (image) => ipcRenderer.invoke("image-save", image),

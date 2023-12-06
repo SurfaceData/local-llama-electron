@@ -1,14 +1,41 @@
-import { BrowserWindow, app, dialog, ipcMain } from "electron";
+import {
+  BrowserWindow,
+  app,
+  dialog,
+  ipcMain,
+  net,
+  protocol,
+  reigsterFileProtocol,
+} from "electron";
 import Store from "electron-store";
 import fs from "fs";
 import { LlamaChatSession, LlamaContext, LlamaModel } from "node-llama-cpp";
 import OpenAI from "openai";
 import os from "os";
 import path from "path";
-import { fileURLToPath } from "url";
+import { fileURLToPath, pathToFileURL } from "url";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+
+/**
+ * If we want to present local images, we have to register a local protocol and
+ * handle it ourselves.  This dodges security issues.
+ */
+protocol.registerSchemesAsPrivileged([
+  { scheme: "app", privileges: { bypassCSP: true } },
+]);
+
+app.whenReady().then(() => {
+  /**
+   * Register a handler for the local protocol.  We do the dumb thing of just
+   * read the file.  This is not safe in general.
+   */
+  protocol.handle("app", (req) => {
+    const { host, pathname } = new URL(req.url);
+    return net.fetch(pathToFileURL(pathname).toString());
+  });
+});
 
 /**
  * Fake for calling llama-cpp-python server with features not yet supported by
@@ -175,6 +202,9 @@ async function analyzeImage(event) {
     filters: [{ name: "Images", extensions: ["jpg", "jpeg", "png", "webp"] }],
     properties: ["openFile"],
   });
+  // Tell the client side that we got the file and give it our local protocol
+  // that's handled properly for electron.
+  event.reply("image-analyze-selection", `app://${filePaths[0]}`);
   // Later, this should actually call a node-llama-cpp model.  For now we call
   // llama-cpp-python through the OpenAI api.
   const result = await mlmOpenai.chat.completions.create({
